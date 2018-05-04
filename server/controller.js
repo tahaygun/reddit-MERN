@@ -176,13 +176,19 @@ module.exports = function(app) {
   //.----------------------------------------------------------------------
 
   app.delete("/api/postdelete/:id", (req, res) => {
-    Post.findOneAndRemove({ _id: req.params.id })
-      .then(res => {
-        res.send(res);
+    Post.findById(req.params.id)
+      .then(post => {
+        if (post.user == req.session.user._id) {
+          Post.findOneAndRemove({ _id: req.params.id })
+            .then(res => {
+              res.send(res);
+            })
+            .catch(err => {
+              res.send(err);
+            });
+        }
       })
-      .catch(err => {
-        res.send(err);
-      });
+      .catch(err => res.send(err));
   });
   //-----------------------------------------------------------------------
   app.post("/api/postupvote/:id", (req, res) => {
@@ -197,10 +203,12 @@ module.exports = function(app) {
   app.post("/api/update/:id", function(req, res) {
     Post.findById(req.params.id)
       .then(function(post) {
-        post.post = req.body.post;
-        post.save().then(function(post) {
-          res.send(post);
-        });
+        if (post.user == req.session.user._id) {
+          post.post = req.body.post;
+          post.save().then(function(post) {
+            res.send(post);
+          });
+        }
       })
       .catch(err => res.send(err));
   });
